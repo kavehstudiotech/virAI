@@ -1,0 +1,1 @@
+export const FloatingButton = () => null;

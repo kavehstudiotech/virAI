@@ -1,11 +1,58 @@
+# virAI (ویرا) - دستیار هوشمند ویرایش متن فارسی
+
 <div align="center">
-
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-
-  <h1>Built with AI Studio</h2>
-
-  <p>The fastest path from prompt to production with Gemini.</p>
-
-  <a href="https://aistudio.google.com/apps">Start building</a>
-
+  <img src="public/icon128.png" alt="virAI Logo" width="100" />
 </div>
+
+**virAI** (ویرا) یک افزونه متن‌باز کروم است که با استفاده از هوش مصنوعی (Google Gemini / OpenAI)، متون فارسی را در هر وب‌سایتی ویرایش می‌کند.
+
+## ✨ ویژگی‌ها
+
+- **اصلاح غلط‌های املایی و نگارشی**: رفع مشکلات رایج تایپی و دستور زبانی.
+- **رعایت نیم‌فاصله**: اعمال دقیق قواعد نیم‌فاصله (Zero-width non-joiner).
+- **تغییر لحن**: تبدیل متن به رسمی (اداری) یا دوستانه (محاوره).
+- **کارکرد در تمام وب**: سازگار با Gmail، Twitter، LinkedIn و تمامی ادیتورهای تحت وب.
+- **پشتیبانی از مدل‌های متنوع**: امکان انتخاب بین Gemini 2.5 Flash, Pro و ...
+
+## 🚀 نصب و راه‌اندازی (برای توسعه‌دهندگان)
+
+1. مخزن را کلون کنید:
+   ```bash
+   git clone https://github.com/your-username/virai.git
+   cd virai
+   ```
+
+2. وابستگی‌ها را نصب کنید:
+   ```bash
+   npm install
+   ```
+
+3. پروژه را بیلد کنید:
+   ```bash
+   npm run build
+   ```
+
+4. افزونه را در کروم بارگذاری کنید:
+   - به آدرس `chrome://extensions` بروید.
+   - گزینه **Developer mode** را در بالا سمت راست فعال کنید.
+   - دکمه **Load unpacked** را بزنید و پوشه `dist` ساخته شده را انتخاب کنید.
+
+## 🛠 تکنولوژی‌های استفاده شده
+
+- **React + Vite**: برای ساخت رابط کاربری Popup و تنظیمات.
+- **TypeScript**: برای کدنویسی امن و استاندارد.
+- **Tailwind CSS**: برای استایل‌دهی (پشتیبانی کامل از RTL).
+- **Manifest V3**: منطبق با آخرین استانداردهای افزونه‌نویسی کروم.
+
+## 🔑 دریافت API Key
+
+برای استفاده از این افزونه، شما نیاز به یک کلید API دارید:
+- **Google Gemini (رایگان):** [دریافت از Google AI Studio](https://aistudio.google.com/)
+- **OpenAI:** [دریافت از OpenAI Platform](https://platform.openai.com/)
+
+## 🤝 مشارکت
+
+از مشارکت شما استقبال می‌کنیم! اگر باگی پیدا کردید یا پیشنهادی دارید، لطفاً Issue ثبت کنید یا Pull Request بفرستید.
+
+---
+ساخته شده با ❤️ برای زبان فارسی

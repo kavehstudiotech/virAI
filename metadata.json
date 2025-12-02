@@ -1,0 +1,5 @@
+{
+  "name": "virAI - Persian Editor",
+  "description": "A Chrome Extension MVP and Demo that uses AI to fix grammar, formalize text, and apply correct Persian orthography (Zero-width non-joiner) on any website.",
+  "requestFramePermissions": []
+}
