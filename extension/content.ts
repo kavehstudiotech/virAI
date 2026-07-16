@@ -1,257 +1,334 @@
+// فایل: extension/content.ts
 
-declare var chrome: any;
+let shadowRoot: ShadowRoot | null = null;
+let currentSelectionRange: Range | null = null;
+let selectedElement: HTMLElement | null = null;
+let fabElement: HTMLElement | null = null;
+let modalElement: HTMLElement | null = null;
+let currentSelectedText: string = "";
+let rootContainer: HTMLDivElement | null = null;
 
-console.log('virAI Content Script Loaded');
+// Extension States
+let isExtensionEnabled = true;
+let currentTheme = 'light';
 
-let currentInput: HTMLElement | null = null;
-let selectionButton: HTMLButtonElement | null = null;
-let reviewModal: HTMLDivElement | null = null;
-
-// For Inputs/Textareas
-let currentSelectionRange: { start: number, end: number } | null = null;
-// For ContentEditable (Gmail, etc.)
-let savedRange: Range | null = null;
-
-let lastMousePosition = { x: 0, y: 0 };
-
-// --- 1. UI Components ---
-
-function createFab() {
-  const btn = document.createElement('button');
-  btn.innerText = '✨'; 
-  const bgColor = '#14b8a6'; // Teal-500
-  
-  btn.style.cssText = `
-    position: absolute;
-    z-index: 99999;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background-color: ${bgColor};
-    color: white;
-    border: none;
-    cursor: pointer;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    transition: transform 0.2s;
-    animation: fadeIn 0.2s ease-out;
-  `;
-  
-  if (!document.getElementById('virai-style')) {
-    const style = document.createElement('style');
-    style.id = 'virai-style';
-    style.innerText = `@keyframes fadeIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }`;
-    document.head.appendChild(style);
-  }
-  
-  btn.onmouseenter = () => { btn.style.transform = 'scale(1.1)'; };
-  btn.onmouseleave = () => { btn.style.transform = 'scale(1)'; };
-  
-  document.body.appendChild(btn);
-  return btn;
-}
-
-function createReviewModal(original: string, corrected: string, onAccept: () => void, onDiscard: () => void, x: number, y: number) {
-  if (reviewModal) reviewModal.remove();
-
-  const modal = document.createElement('div');
-  reviewModal = modal;
-
-  modal.style.cssText = `
-    position: absolute;
-    z-index: 100000;
-    width: 300px;
-    background-color: white;
-    border-radius: 12px;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-    border: 1px solid #e5e7eb;
-    overflow: hidden;
-    font-family: sans-serif;
-    direction: rtl;
-    animation: fadeIn 0.2s ease-out;
-  `;
-
-  const truncatedOriginal = original.length > 50 ? original.substring(0, 50) + '...' : original;
-
-  modal.innerHTML = `
-    <div style="background: #0d9488; color: white; padding: 8px 12px; font-size: 12px; font-weight: bold; display: flex; justify-content: space-between;">
-      <span>پیشنهاد virAI</span>
-      <span id="virai-close" style="cursor: pointer;">✕</span>
-    </div>
-    <div style="padding: 12px; font-size: 14px;">
-      <div style="color: #9ca3af; text-decoration: line-through; margin-bottom: 8px; font-size: 12px;">${truncatedOriginal}</div>
-      <div style="color: #115e59; background: #ccfbf1; padding: 8px; border-radius: 6px; margin-bottom: 12px; line-height: 1.6;">${corrected}</div>
-      <div style="display: flex; gap: 8px;">
-        <button id="virai-discard" style="flex: 1; padding: 6px; background: #f3f4f6; border: none; border-radius: 6px; color: #374151; cursor: pointer;">رد کردن</button>
-        <button id="virai-accept" style="flex: 2; padding: 6px; background: #0d9488; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer;">جایگزین کن</button>
-      </div>
-    </div>
-  `;
-
-  document.body.appendChild(modal);
-
-  // Position logic
-  const modalWidth = 300;
-  let finalLeft = x;
-  if (finalLeft + modalWidth > window.innerWidth) {
-      finalLeft = window.innerWidth - modalWidth - 20;
-  }
-  
-  modal.style.top = `${y + 15}px`;
-  modal.style.left = `${finalLeft}px`;
-
-  document.getElementById('virai-close')?.addEventListener('click', onDiscard);
-  document.getElementById('virai-discard')?.addEventListener('click', onDiscard);
-  document.getElementById('virai-accept')?.addEventListener('click', onAccept);
-
-  return modal;
-}
-
-// --- 2. Logic ---
-
-async function handleProcess(text: string, isPartial: boolean, btnElement: HTMLButtonElement) {
-  if (!text || text.trim().length === 0) return;
-
-  btnElement.innerText = '⏳';
-  btnElement.disabled = true;
-  
-  const modalX = lastMousePosition.x;
-  const modalY = lastMousePosition.y;
-
-  chrome.runtime.sendMessage(
-    { action: 'CORRECT_TEXT', text: text }, 
-    (response: any) => {
-      btnElement.innerText = '✨';
-      btnElement.disabled = false;
-      
-      if (selectionButton) selectionButton.style.display = 'none';
-
-      if (response && response.success && response.data) {
-        createReviewModal(
-          text,
-          response.data,
-          () => {
-            // ACCEPT
-            if (currentInput) {
-               // 1. Standard Input/Textarea
-               if (currentInput.tagName === 'INPUT' || currentInput.tagName === 'TEXTAREA') {
-                   const input = currentInput as HTMLInputElement | HTMLTextAreaElement;
-                   if (isPartial && currentSelectionRange) {
-                      input.setRangeText(response.data, currentSelectionRange.start, currentSelectionRange.end, 'end');
-                   } else {
-                      input.value = response.data;
-                   }
-                   input.dispatchEvent(new Event('input', { bubbles: true }));
-               } 
-               // 2. ContentEditable (Gmail, etc.)
-               else if (currentInput.isContentEditable && savedRange) {
-                   const selection = window.getSelection();
-                   if (selection) {
-                       selection.removeAllRanges();
-                       selection.addRange(savedRange);
-                       // execCommand is deprecated but still the most reliable way 
-                       // to handle rich text editors (like Gmail) and preserve undo history.
-                       document.execCommand('insertText', false, response.data);
-                   }
-               }
-            }
-            if (reviewModal) reviewModal.remove();
-          },
-          () => {
-            // DISCARD
-            if (reviewModal) reviewModal.remove();
-          },
-          modalX,
-          modalY
-        );
-      } else {
-        alert('خطا در دریافت پاسخ از هوش مصنوعی');
-      }
-    }
-  );
-}
-
-// Event Listeners
-
-document.addEventListener('mouseup', (e) => {
-  lastMousePosition = { x: e.pageX, y: e.pageY };
-
-  if (selectionButton) selectionButton.style.display = 'none';
-  
-  // Don't close modal if we clicked inside it
-  if (reviewModal && reviewModal.contains(e.target as Node)) {
-      return;
-  } else if (reviewModal) {
-      // Optional: Close modal if clicking outside?
-      // reviewModal.remove(); reviewModal = null; 
-      // User might want to click outside to read text, so maybe keep it open until explicit close.
-  }
-
-  const activeElement = document.activeElement as HTMLElement;
-
-  if (activeElement) {
-      const isInput = activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA';
-      const isContentEditable = activeElement.isContentEditable;
-
-      if (isInput || isContentEditable) {
-          let hasSelection = false;
-          let selectedText = '';
-
-          if (isInput) {
-              const input = activeElement as HTMLInputElement;
-              if (input.selectionStart !== input.selectionEnd) {
-                  hasSelection = true;
-                  selectedText = input.value.substring(input.selectionStart || 0, input.selectionEnd || 0);
-                  currentInput = input;
-                  currentSelectionRange = { start: input.selectionStart || 0, end: input.selectionEnd || 0 };
-              }
-          } else if (isContentEditable) {
-              const selection = window.getSelection();
-              if (selection && !selection.isCollapsed) {
-                  const text = selection.toString();
-                  if (text && text.trim().length > 0) {
-                      hasSelection = true;
-                      selectedText = text;
-                      currentInput = activeElement;
-                      savedRange = selection.getRangeAt(0).cloneRange();
-                  }
-              }
-          }
-
-          if (hasSelection && selectedText) {
-              if (!selectionButton) {
-                  selectionButton = createFab(); 
-                  selectionButton.addEventListener('mousedown', (ev) => {
-                      // Prevent losing focus/selection
-                      ev.preventDefault();
-                      ev.stopPropagation();
-                  });
-                  selectionButton.addEventListener('click', (ev) => {
-                      ev.preventDefault();
-                      ev.stopPropagation();
-                      
-                      // Refetch text in case selection changed slightly or just to be safe
-                      let textToProcess = '';
-                      if (currentInput?.tagName === 'INPUT' || currentInput?.tagName === 'TEXTAREA') {
-                          const inp = currentInput as HTMLInputElement;
-                          textToProcess = inp.value.substring(currentSelectionRange?.start || 0, currentSelectionRange?.end || 0);
-                      } else if (currentInput?.isContentEditable && savedRange) {
-                          textToProcess = savedRange.toString();
-                      }
-
-                      if (textToProcess) {
-                          handleProcess(textToProcess, true, selectionButton!);
-                      }
-                  });
-              }
-              
-              selectionButton.style.top = `${e.pageY - 40}px`;
-              selectionButton.style.left = `${e.pageX}px`;
-              selectionButton.style.display = 'flex';
-          }
-      }
+// Listen to storage changes to update states dynamically
+chrome.storage.local.get(['isExtensionEnabled', 'theme'], (res) => {
+  if (res.isExtensionEnabled !== undefined) isExtensionEnabled = res.isExtensionEnabled;
+  if (res.theme) {
+    currentTheme = res.theme;
+    updateThemeClass();
   }
 });
+
+chrome.storage.onChanged.addListener((changes, namespace) => {
+  if (namespace === 'local') {
+    if (changes.isExtensionEnabled) isExtensionEnabled = changes.isExtensionEnabled.newValue;
+    if (changes.theme) {
+      currentTheme = changes.theme.newValue;
+      updateThemeClass();
+    }
+  }
+});
+
+function updateThemeClass() {
+  if (rootContainer) {
+    if (currentTheme === 'dark') {
+      rootContainer.classList.add('dark');
+    } else {
+      rootContainer.classList.remove('dark');
+    }
+  }
+}
+
+function getShadowRoot(): ShadowRoot {
+  if (!shadowRoot) {
+    rootContainer = document.createElement('div');
+    rootContainer.id = 'virai-extension-root';
+    rootContainer.style.position = 'absolute';
+    rootContainer.style.top = '0';
+    rootContainer.style.left = '0';
+    rootContainer.style.zIndex = '2147483647';
+    // اعمال تم اولیه
+    if (currentTheme === 'dark') rootContainer.classList.add('dark');
+    
+    document.body.appendChild(rootContainer);
+    shadowRoot = rootContainer.attachShadow({ mode: 'open' });
+
+    const style = document.createElement('style');
+    // استفاده از CSS Variables برای پیاده‌سازی Dark/Light Mode
+    style.textContent = `
+      :host { 
+        all: initial; 
+        --bg-color: white;
+        --text-color: #374151; /* gray-700 */
+        --border-color: rgba(0,0,0,0.05);
+        --header-border: #f3f4f6; /* gray-100 */
+        --icon-color: #9ca3af; /* gray-400 */
+        --old-bg: #fee2e2;
+        --old-text: #991b1b;
+        --new-bg: #f0fdfa;
+        --new-text: #0f766e;
+        --new-border: #ccfbf1;
+        --cancel-bg: #f3f4f6;
+        --cancel-hover: #e5e7eb;
+        --cancel-text: #4b5563;
+      }
+
+      /* استایل‌های دارک مود وقتی کلاس dark روی container قرار می‌گیرد */
+      :host(.dark) {
+        --bg-color: #1f2937; /* gray-800 */
+        --text-color: #e5e7eb; /* gray-200 */
+        --border-color: #374151; /* gray-700 */
+        --header-border: #374151; /* gray-700 */
+        --icon-color: #6b7280; /* gray-500 */
+        --old-bg: #450a0a; /* red-950 */
+        --old-text: #fca5a5; /* red-300 */
+        --new-bg: #134e4a; /* teal-950 */
+        --new-text: #5eead4; /* teal-300 */
+        --new-border: #0f766e; /* teal-700 */
+        --cancel-bg: #374151; /* gray-700 */
+        --cancel-hover: #4b5563; /* gray-600 */
+        --cancel-text: #d1d5db; /* gray-300 */
+      }
+
+      .virai-fab {
+        position: absolute; cursor: pointer; background: #0d9488; color: white;
+        border-radius: 50%; width: 34px; height: 34px; display: flex;
+        align-items: center; justify-content: center; box-shadow: 0 4px 6px -1px rgba(13, 148, 136, 0.3);
+        border: none; font-size: 16px; transition: transform 0.2s ease; z-index: 9999;
+      }
+      .virai-fab:hover { transform: scale(1.1); background: #0f766e; }
+      
+      .virai-modal {
+        position: absolute;
+        background: var(--bg-color); padding: 16px; border-radius: 12px; width: 320px;
+        box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3), 0 0 0 1px var(--border-color);
+        display: flex; flex-direction: column; gap: 12px; z-index: 10000;
+        font-family: Tahoma, "Vazirmatn", sans-serif; direction: rtl;
+        animation: slideIn 0.2s ease-out;
+      }
+      @keyframes slideIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .virai-header {
+        display: flex; justify-content: space-between; align-items: center;
+        border-bottom: 1px solid var(--header-border); padding-bottom: 8px; margin-bottom: 4px;
+      }
+      .virai-title { margin: 0; font-size: 13px; font-weight: bold; color: #0d9488; }
+      .virai-close-icon { cursor: pointer; color: var(--icon-color); font-size: 16px; line-height: 1; transition: color 0.2s;}
+      .virai-close-icon:hover { color: var(--text-color); }
+      
+      .virai-text-box { padding: 10px; border-radius: 6px; font-size: 13px; line-height: 1.6; white-space: pre-wrap; word-break: break-word;}
+      .virai-old-text { background: var(--old-bg); color: var(--old-text); text-decoration: line-through; opacity: 0.8; font-size: 12px;}
+      .virai-new-text { background: var(--new-bg); color: var(--new-text); border: 1px solid var(--new-border); font-weight: 500;}
+      
+      .virai-actions { display: flex; gap: 8px; margin-top: 4px; }
+      .virai-btn { flex: 1; padding: 8px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; font-size: 13px; font-family: inherit; transition: background 0.2s; }
+      .virai-btn-cancel { background: var(--cancel-bg); color: var(--cancel-text); }
+      .virai-btn-cancel:hover { background: var(--cancel-hover); }
+      .virai-btn-confirm { background: #0d9488; color: white; flex: 2; display: flex; justify-content: center; gap: 6px; align-items: center;}
+      .virai-btn-confirm:hover { background: #0f766e; }
+    `;
+    shadowRoot.appendChild(style);
+  }
+  return shadowRoot;
+}
+
+function hideModal() {
+  if (modalElement) {
+    modalElement.remove();
+    modalElement = null;
+  }
+}
+
+function showReviewModal(originalText: string, correctedText: string, x: number, y: number, onConfirm: () => void) {
+  const root = getShadowRoot();
+  hideModal(); 
+
+  modalElement = document.createElement('div');
+  modalElement.className = 'virai-modal';
+
+  const modalWidth = 320;
+  let modalX = x - (modalWidth / 2); 
+  if (modalX < 10) modalX = 10;
+  if (modalX + modalWidth > window.innerWidth) modalX = window.innerWidth - modalWidth - 20;
+  
+  modalElement.style.left = `${modalX}px`;
+  modalElement.style.top = `${y + 15}px`;
+
+  const header = document.createElement('div');
+  header.className = 'virai-header';
+  
+  const title = document.createElement('h3');
+  title.className = 'virai-title';
+  title.textContent = '✨ پیشنهاد ویرا';
+
+  const closeBtn = document.createElement('span');
+  closeBtn.className = 'virai-close-icon';
+  closeBtn.innerHTML = '&times;';
+  closeBtn.onclick = () => {
+    hideModal();
+    if (selectedElement) selectedElement.focus();
+  };
+  
+  header.append(title, closeBtn);
+
+  const oldTextEl = document.createElement('div');
+  oldTextEl.className = 'virai-text-box virai-old-text';
+  oldTextEl.textContent = originalText;
+
+  const newTextEl = document.createElement('div');
+  newTextEl.className = 'virai-text-box virai-new-text';
+  newTextEl.textContent = correctedText;
+
+  const actionsContainer = document.createElement('div');
+  actionsContainer.className = 'virai-actions';
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'virai-btn virai-btn-cancel';
+  cancelBtn.textContent = 'انصراف';
+  cancelBtn.onclick = () => {
+    hideModal();
+    if (selectedElement) selectedElement.focus();
+  };
+
+  const confirmBtn = document.createElement('button');
+  confirmBtn.className = 'virai-btn virai-btn-confirm';
+  confirmBtn.innerHTML = `✓ جایگزین کن`;
+  confirmBtn.onclick = () => {
+    onConfirm();
+    hideModal();
+  };
+
+  actionsContainer.append(cancelBtn, confirmBtn);
+  modalElement.append(header, oldTextEl, newTextEl, actionsContainer);
+  
+  root.appendChild(modalElement);
+}
+
+function replaceSelectedText(newText: string) {
+  if (!selectedElement) return;
+  selectedElement.focus();
+
+  if (selectedElement instanceof HTMLInputElement || selectedElement instanceof HTMLTextAreaElement) {
+    const start = selectedElement.selectionStart || 0;
+    const end = selectedElement.selectionEnd || 0;
+    const val = selectedElement.value;
+    selectedElement.value = val.substring(0, start) + newText + val.substring(end);
+    
+    selectedElement.dispatchEvent(new Event('input', { bubbles: true }));
+    selectedElement.dispatchEvent(new Event('change', { bubbles: true }));
+    selectedElement.selectionStart = selectedElement.selectionEnd = start + newText.length;
+  } else {
+    const selection = window.getSelection();
+    if (selection && currentSelectionRange) {
+      selection.removeAllRanges();
+      selection.addRange(currentSelectionRange);
+      document.execCommand('insertText', false, newText);
+    }
+  }
+}
+
+function hideFab() {
+  if (fabElement) {
+    fabElement.remove();
+    fabElement = null;
+  }
+}
+
+function showFab(x: number, y: number, text: string) {
+  const root = getShadowRoot();
+  hideFab();
+  hideModal(); 
+
+  fabElement = document.createElement('button');
+  fabElement.className = 'virai-fab';
+  fabElement.textContent = '✨';
+  fabElement.style.left = `${x + 5}px`;
+  fabElement.style.top = `${y + 15}px`;
+
+  fabElement.onmousedown = (e) => e.preventDefault();
+
+  fabElement.onclick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const modalX = x;
+    const modalY = y + 20;
+    
+    hideFab();
+    document.body.style.cursor = 'wait';
+
+    chrome.runtime.sendMessage(
+      { action: "CORRECT_TEXT", text: text },
+      (response) => {
+        document.body.style.cursor = 'default';
+        if (response && response.correctedText) {
+          showReviewModal(text, response.correctedText, modalX, modalY, () => {
+            replaceSelectedText(response.correctedText);
+          });
+        } else if (response && response.error) {
+          alert('خطای ویرا: ' + response.error);
+        }
+      }
+    );
+  };
+
+  root.appendChild(fabElement);
+}
+
+function handleSelection(e: MouseEvent | KeyboardEvent) {
+  // --- بررسی خاموش یا روشن بودن اکستنشن قبل از انجام هر کاری ---
+  if (!isExtensionEnabled) return;
+
+  const rootNode = document.getElementById('virai-extension-root');
+  if (rootNode && e.target instanceof Node && rootNode.contains(e.target)) {
+    return;
+  }
+
+  setTimeout(() => {
+    const activeEl = document.activeElement as HTMLElement;
+    let selectedText = "";
+
+    if (activeEl instanceof HTMLTextAreaElement || (activeEl instanceof HTMLInputElement && activeEl.type === 'text')) {
+      const start = activeEl.selectionStart || 0;
+      const end = activeEl.selectionEnd || 0;
+      selectedText = activeEl.value.substring(start, end).trim();
+      selectedElement = activeEl;
+    } else {
+      const selection = window.getSelection();
+      selectedText = selection?.toString().trim() || "";
+      if (selectedText && selection && selection.rangeCount > 0) {
+        currentSelectionRange = selection.getRangeAt(0).cloneRange();
+      }
+      selectedElement = activeEl;
+    }
+
+    if (selectedText && selectedText.length > 2) {
+      let x = 0; let y = 0;
+
+      if (e instanceof MouseEvent) {
+        x = e.pageX;
+        y = e.pageY;
+      } else {
+        const rect = activeEl.getBoundingClientRect();
+        x = rect.right + window.scrollX - 40;
+        y = rect.bottom + window.scrollY + 10;
+      }
+
+      showFab(x, y, selectedText);
+    } else {
+      hideFab();
+      hideModal();
+    }
+  }, 10);
+}
+
+document.addEventListener('mouseup', handleSelection, true);
+document.addEventListener('keyup', (e) => {
+  if (e.key === 'Shift' || e.key.startsWith('Arrow')) {
+    handleSelection(e);
+  }
+}, true);

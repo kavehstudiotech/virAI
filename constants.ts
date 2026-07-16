@@ -1,5 +1,4 @@
-
-import { Tone } from './types';
+import { ProviderConfig } from './types';
 
 export const SYSTEM_INSTRUCTION = `
 You are an expert Persian (Farsi) language editor and linguist. 
@@ -33,3 +32,79 @@ TONE INSTRUCTIONS:
     - Do NOT change the register (e.g., do NOT change "می‌خوام" to "می‌خواهم" if the context is informal).
     - Do NOT translate English words.
 `;
+
+export const PROVIDERS: ProviderConfig[] = [
+  {
+    id: 'groq',
+    name: 'Grok / Groq (دارای پلن رایگان)',
+    baseUrl: 'https://api.groq.com/openai/v1/chat/completions',
+    models: [
+      { label: 'openai/gpt-oss-120b (پیش‌فرض)', value: 'openai/gpt-oss-120b' },
+      { label: 'meta-llama/llama-4-scout-17b-16e-instruct', value: 'meta-llama/llama-4-scout-17b-16e-instruct' },
+      { label: 'qwen/qwen3.6-27b', value: 'qwen/qwen3.6-27b' },
+      { label: 'openai/gpt-oss-20b', value: 'openai/gpt-oss-20b' },
+      { label: 'llama-3.3-70b-versatile', value: 'llama-3.3-70b-versatile' },
+    ]
+  },
+  {
+    id: 'gemini',
+    name: 'Google AI Studio (دارای پلن رایگان)',
+    // استفاده از اندپوینت سازگار با OpenAI گوگل
+    baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+    models: [
+      { label: 'Gemini 3.1 Flash lite (پیش‌فرض)', value: 'gemini-3.1-flash-lite' },
+      { label: 'Gemini 3.5 Flash', value: 'gemini-3.5-flash' },
+      { label: 'Gemini 3.1 Pro', value: 'gemini-3.1-pro' },
+      { label: 'Gemini 2.5 Flash', value: 'gemini-2.5-flash' },
+      { label: 'Gemini 2.5 Pro', value: 'gemini-2.5-pro' },
+    ]
+  },
+  {
+    id: 'deepseek',
+    name: 'DeepSeek',
+    baseUrl: 'https://api.deepseek.com/chat/completions',
+    models: [
+      { label: 'deepseek-v4-flash', value: 'deepseek-v4-flash' },
+      { label: 'deepseek-v4-pro', value: 'deepseek-v4-pro' },
+    ]
+  },
+  {
+    id: 'openai',
+    name: 'OpenAI',
+    baseUrl: 'https://api.openai.com/v1/chat/completions',
+    models: [
+      { label: 'gpt-5.6-luna', value: 'gpt-5.6-luna' },
+      { label: 'gpt-4o-mini', value: 'gpt-4o-mini' },
+      { label: 'gpt-5.6-sol', value: 'gpt-5.6-sol' },
+      { label: 'gpt-4o', value: 'gpt-4o' },
+    ]
+  },
+  {
+    id: 'openrouter',
+    name: 'OpenRouter',
+    baseUrl: 'https://openrouter.ai/api/v1/chat/completions',
+    models: [
+      { label: 'Claude 3.5 Sonnet (پولی)', value: 'anthropic/claude-3.5-sonnet' },
+      { label: 'GPT-4o (پولی)', value: 'openai/gpt-4o' },
+      { label: 'GPT-5.6 Sol (پولی)', value: 'openai/gpt-5.6-sol' },
+      { label: 'DeepSeek V4 Pro (پولی)', value: 'deepseek/deepseek-v4-pro' },
+      { label: 'Gemini 2.5 Pro (پولی)', value: 'google/gemini-2.5-pro' },
+      { label: 'Gemini 2.5 Pro Free (رایگان)', value: 'google/gemini-2.5-pro:free' },
+      { label: 'Llama 4 Scout Free (رایگان)', value: 'meta-llama/llama-4-scout:free' },
+      { label: 'DeepSeek R1 Free (رایگان)', value: 'deepseek/deepseek-r1:free' },
+      { label: 'DeepSeek Chat Free (رایگان)', value: 'deepseek/deepseek-chat:free' },
+    ]
+  },
+  {
+    id: 'local',
+    name: 'Ollama (مدل های لوکال)',
+    baseUrl: 'http://localhost:11434/v1/chat/completions',
+    models: []
+  },
+  {
+    id: 'custom',
+    name: 'آدرس سفارشی (Custom API)',
+    baseUrl: '',
+    models: []
+  }
+];

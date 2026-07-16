@@ -9,10 +9,22 @@ body {
   overflow: hidden; /* Prevent body scrolling in popup */
 }
 
-/* Ensure React Root fills the popup window */
 #root {
   width: 100%;
   height: 100%;
+}
+
+/* --- مخفی کردن کامل اسکرول‌بار در تمام بخش‌ها --- */
+::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
+* {
+  -ms-overflow-style: none !important;  /* IE and Edge */
+  scrollbar-width: none !important;  /* Firefox */
 }
 
 /* Animations */
