@@ -2,7 +2,7 @@
 {
   "manifest_version": 3,
   "name": "virAI - Persian Editor",
-  "version": "1.0.0",
+  "version": "1.3.0",
   "description": "Dastyar Hooshmand Vira - Fix Persian grammar and formalize text using AI.",
   "permissions": [
     "activeTab",

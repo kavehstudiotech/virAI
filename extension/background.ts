@@ -2,24 +2,16 @@ declare var chrome: any;
 import { SYSTEM_INSTRUCTION, PROVIDERS } from '../constants';
 import { ProviderId } from '../types';
 
-chrome.runtime.onInstalled.addListener(() => {
-  chrome.contextMenus.create({ id: "virai-fix", title: "virAI: اصلاح نگارشی", contexts: ["selection"] });
-  chrome.contextMenus.create({ id: "virai-formal", title: "virAI: رسمی کردن متن", contexts: ["selection"] });
-});
+chrome.runtime.onInstalled.addListener((details: any) => {
+  // پاکسازی و ایجاد مجدد منوهای کلیک راست پس از آپدیت یا نصب مجدد
+  chrome.contextMenus.removeAll(() => {
+    chrome.contextMenus.create({ id: "virai-fix", title: "virAI: اصلاح نگارشی", contexts: ["selection"] });
+    chrome.contextMenus.create({ id: "virai-formal", title: "virAI: رسمی کردن متن", contexts: ["selection"] });
+  });
 
-chrome.contextMenus.onClicked.addListener(async (info: any, tab: any) => {
-  if (info.menuItemId.startsWith("virai-") && info.selectionText) {
-    const tone = info.menuItemId === "virai-formal" ? "FORMAL" : "GRAMMAR_ONLY";
-    try {
-      const corrected = await processCorrection(info.selectionText, tone);
-      if (tab?.id) {
-        chrome.scripting.executeScript({
-          target: { tabId: tab.id },
-          func: (text: string) => document.execCommand('insertText', false, text),
-          args: [corrected]
-        });
-      }
-    } catch (e) { console.error(e); }
+  // باز کردن صفحه اختصاصی تغییرات در صورت بروزرسانی خودکار اکستنشن
+  if (details.reason === "update") {
+    chrome.tabs.create({ url: chrome.runtime.getURL("changelog.html") });
   }
 });
 
@@ -35,7 +27,7 @@ chrome.runtime.onMessage.addListener((request: any, sender: any, sendResponse: a
 async function processCorrection(text: string, requestedTone: string | null): Promise<string> {
   const data = await chrome.storage.local.get([
     'apiKeys', 'selectedModels', 'provider', 'customBaseUrl', 'customModel', 'defaultTone',
-    'customPrompts', 'selectedCustomPromptId' // واکشی اطلاعات پرامپت سفارشی
+    'customPrompts', 'selectedCustomPromptId'
   ]);
   
   const tone = requestedTone || data.defaultTone || 'FORMAL';
@@ -78,7 +70,6 @@ async function processCorrection(text: string, requestedTone: string | null): Pr
     headers['X-Title'] = 'virAI';
   }
 
-  // پیدا کردن دستورالعمل پرامپت سفارشیِ فعال
   const customPrompts = data.customPrompts || [];
   const selectedCustomPromptId = data.selectedCustomPromptId || '';
   const activePrompt = customPrompts.find((p: any) => p.id === selectedCustomPromptId);

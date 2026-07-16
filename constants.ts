@@ -84,15 +84,11 @@ export const PROVIDERS: ProviderConfig[] = [
     name: 'OpenRouter',
     baseUrl: 'https://openrouter.ai/api/v1/chat/completions',
     models: [
-      { label: 'Claude 3.5 Sonnet (پولی)', value: 'anthropic/claude-3.5-sonnet' },
-      { label: 'GPT-4o (پولی)', value: 'openai/gpt-4o' },
-      { label: 'GPT-5.6 Sol (پولی)', value: 'openai/gpt-5.6-sol' },
-      { label: 'DeepSeek V4 Pro (پولی)', value: 'deepseek/deepseek-v4-pro' },
-      { label: 'Gemini 2.5 Pro (پولی)', value: 'google/gemini-2.5-pro' },
-      { label: 'Gemini 2.5 Pro Free (رایگان)', value: 'google/gemini-2.5-pro:free' },
-      { label: 'Llama 4 Scout Free (رایگان)', value: 'meta-llama/llama-4-scout:free' },
-      { label: 'DeepSeek R1 Free (رایگان)', value: 'deepseek/deepseek-r1:free' },
-      { label: 'DeepSeek Chat Free (رایگان)', value: 'deepseek/deepseek-chat:free' },
+      { label: 'Claude 3.5 Sonnet', value: 'anthropic/claude-3.5-sonnet' },
+      { label: 'GPT-4o', value: 'openai/gpt-4o' },
+      { label: 'GPT-5.6 Sol', value: 'openai/gpt-5.6-sol' },
+      { label: 'DeepSeek V4 Pro', value: 'deepseek/deepseek-v4-pro' },
+      { label: 'Gemini 3.5 flash', value: 'google/gemini-3.5-flash' },
     ]
   },
   {

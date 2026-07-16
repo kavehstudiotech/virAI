@@ -1,0 +1,235 @@
+<!-- FILE: public/changelog.html -->
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>ویرا بروزرسانی شد! 🎉</title>
+  <!-- بارگذاری فونت استاندارد وزیرمتن -->
+  <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+  
+  <style>
+    /* استایل‌های پایه و متغیرهای رنگی تم روشن */
+    :root {
+      --bg: #f3f4f6;
+      --card-bg: #ffffff;
+      --primary: #0d9488; /* رنگ سبز-آبی اختصاصی ویرا */
+      --primary-hover: #0f766e;
+      --text: #1f2937;
+      --text-muted: #6b7280;
+      --border: #e5e7eb;
+      --accent-bg: #f0fdfa;
+    }
+
+    /* تغییر خودکار رنگ‌ها به تم تاریک بر اساس تم سیستم‌عامل کاربر */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #111827;
+        --card-bg: #1f2937;
+        --text: #f3f4f6;
+        --text-muted: #9ca3af;
+        --border: #374151;
+        --accent-bg: #134e4a;
+      }
+    }
+
+    body {
+      font-family: 'Vazirmatn', Tahoma, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 500px;
+      padding: 24px;
+      box-sizing: border-box;
+    }
+
+    .card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+      padding: 36px;
+      text-align: center;
+      transition: background-color 0.3s, border-color 0.3s;
+    }
+
+    .logo-container {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 64px;
+      height: 64px;
+      background-color: var(--primary);
+      color: white;
+      border-radius: 18px;
+      font-size: 34px;
+      font-weight: 900;
+      font-style: italic;
+      margin-bottom: 24px;
+      box-shadow: 0 10px 20px -6px rgba(13, 148, 136, 0.4);
+    }
+
+    h1 {
+      margin: 0 0 8px 0;
+      font-size: 22px;
+      font-weight: 850;
+    }
+
+    .version-badge {
+      display: inline-block;
+      background-color: var(--accent-bg);
+      color: var(--primary);
+      font-size: 11px;
+      font-weight: bold;
+      padding: 4px 14px;
+      border-radius: 9999px;
+      margin-bottom: 32px;
+    }
+
+    .changelog-title {
+      text-align: right;
+      font-size: 13px;
+      font-weight: bold;
+      margin-bottom: 16px;
+      color: var(--text);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 10px;
+      opacity: 0.9;
+    }
+
+    .changes-list {
+      text-align: right;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+      margin-bottom: 36px;
+    }
+
+    .change-item {
+      display: flex;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .change-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background-color: var(--accent-bg);
+      color: var(--primary);
+      border-radius: 50%; /* کاملاً دایره‌ای برای شمارش منظم */
+      font-size: 13px;
+      font-weight: 800;
+      flex-shrink: 0;
+      border: 1px solid rgba(13, 148, 136, 0.2);
+    }
+
+    .change-content h3 {
+      margin: 0 0 4px 0;
+      font-size: 13px;
+      font-weight: bold;
+    }
+
+    .change-content p {
+      margin: 0;
+      font-size: 11px;
+      line-height: 1.6;
+      color: var(--text-muted);
+    }
+
+    .btn-close {
+      display: block;
+      width: 100%;
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 13px;
+      font-size: 13px;
+      font-weight: bold;
+      font-family: inherit;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: background-color 0.2s, transform 0.1s;
+      box-shadow: 0 4px 14px rgba(13, 148, 136, 0.25);
+    }
+
+    .btn-close:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .btn-close:active {
+      transform: scale(0.98);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="logo-container">Va</div>
+      <h1>ویرا بروزرسانی شد! 🎉</h1>
+      <div class="version-badge">تغییرات نسخه جدید ۱.۳.۰</div>
+
+      <div class="changelog-title">📋 لیست تغییرات اعمال شده:</div>
+
+      <div class="changes-list">
+        <!-- ======================================================================== -->
+        <!-- بخش تغییرات: برای بروزرسانی‌های بعدی، کافیست متن‌های داخل تگ‌های زیر را ادیت کنید -->
+        <!-- ======================================================================== -->
+
+        <div class="change-item">
+          <div class="change-icon">۱</div>
+          <div class="change-content">
+            <h3>پرامپت‌های شخصی و سفارشی</h3>
+            <p>امکان ساخت، ذخیره‌سازی و ویرایش پرامپت‌های اختصاصی شما (مانند ویرایش علمی، خلاصه کردن، ترجمه و...) جهت اعمال سریع روی متون در سراسر وب.</p>
+          </div>
+        </div>
+
+        <div class="change-item">
+          <div class="change-icon">۲</div>
+          <div class="change-content">
+            <h3>پشتیبانی کامل از تم تاریک (Dark Mode)</h3>
+            <p>هماهنگ شدن خودکار محیط‌های پاپ‌آپ، شبیه‌ساز، دکمه شناور و کادر بازبینی با تنظیمات روز/شب دستگاه شما.</p>
+          </div>
+        </div>
+
+        <div class="change-item">
+          <div class="change-icon">۳</div>
+          <div class="change-content">
+            <h3>کلید روشن و خاموش سراسری</h3>
+            <p>امکان غیرفعال کردن موقت کادر و دکمه شناور جادویی اصلاح متن روی تمام وب‌سایت‌ها از طریق دکمه پاور در هدر برنامه.</p>
+          </div>
+        </div>
+
+        <div class="change-item">
+          <div class="change-icon">۴</div>
+          <div class="change-content">
+            <h3>بهبودهای فنی و ظاهری</h3>
+            <p>رفع مشکل نمایش دکمه تغییر متن در برخی صفحات و افزایش پایداری عملکرد برنامه. و ارتقای سرعت پاسخ‌دهی هوش مصنوعی.</p>
+          </div>
+        </div>
+
+        <!-- ======================================================================== -->
+        <!-- پایان بخش تغییرات -->
+        <!-- ======================================================================== -->
+      </div>
+
+      <!-- دکمه بستن تب پس از خواندن تغییرات همراه با شناسه اختصاصی -->
+      <button class="btn-close" id="btn-close-tab">فهمیدم و بستن تب</button>
+    </div>
+  </div>
+
+  <!-- پیوند اسکریپت بیرونی جهت رعایت الزامات امنیتی Manifest V3 -->
+  <script src="changelog.js"></script>
+</body>
+</html>

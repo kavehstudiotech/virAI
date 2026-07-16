@@ -209,7 +209,6 @@ const App: React.FC = () => {
       let finalModel = selectedModels[provider] || '';
       if (finalModel === '__custom__' || provider === 'local' || provider === 'custom') finalModel = customModel;
       
-      // اگر لحن فعال سفارشی است، پرامپت آن را به تابع ارسال می‌کنیم
       const activePromptText = defaultTone === Tone.CUSTOM
         ? (customPrompts.find(p => p.id === selectedCustomPromptId)?.prompt || '')
         : undefined;
@@ -252,8 +251,8 @@ const App: React.FC = () => {
   const isDark = theme === 'dark';
 
   return (
-    <div className={`${isDark ? 'bg-gray-900 text-gray-200' : 'bg-gray-100 text-gray-800'} flex flex-col items-center font-sans transition-colors duration-200 ${isExtensionPopup ? 'w-[380px] h-[600px] overflow-hidden p-0' : 'min-h-screen py-8 px-4'}`}>
-      <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} shadow-xl overflow-hidden border flex flex-col transition-colors duration-200 ${isExtensionPopup ? 'w-full h-full border-0 shadow-none' : 'w-full max-w-lg rounded-2xl h-[600px]'}`}>
+    <div className={`${isDark ? 'dark bg-gray-900 text-gray-200' : 'bg-gray-100 text-gray-800'} flex flex-col items-center font-sans transition-colors duration-200 ${isExtensionPopup ? 'w-[380px] h-[600px] overflow-hidden p-0' : 'min-h-screen py-8 px-4'}`}>
+      <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} shadow-xl overflow-hidden border flex flex-col relative transition-colors duration-200 ${isExtensionPopup ? 'w-full h-full border-0 shadow-none' : 'w-full max-w-lg rounded-2xl h-[600px]'}`}>
         
         {/* Header */}
         <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} border-b p-4 flex items-center justify-between sticky top-0 z-10 transition-colors duration-200`}>
@@ -471,7 +470,7 @@ const App: React.FC = () => {
                     /* فرم ثبت و ویرایش پرامپت */
                     <div className={`space-y-3 p-3 rounded-lg border border-dashed ${isDark ? 'border-gray-600' : 'border-gray-300'}`}>
                       <div>
-                        <label className={`block text-[10px] font-bold mb-1 ${isDark ? 'text-gray-400' : 'text-gray-650'}`}>عنوان پرامپت</label>
+                        <label className={`block text-[10px] font-bold mb-1 ${isDark ? 'text-gray-400' : 'text-gray-655'}`}>عنوان پرامپت</label>
                         <input
                           type="text"
                           value={promptTitle}
